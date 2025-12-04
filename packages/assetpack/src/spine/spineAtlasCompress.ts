@@ -49,6 +49,7 @@ export function spineAtlasCompress(
 
             // Build a set of all sibling and child filenames for fast lookup
             const availableFiles = new Set<string>();
+
             for (const sibling of siblings) {
                 availableFiles.add(sibling.filename);
                 for (const child of sibling.children ?? []) {
@@ -71,6 +72,7 @@ export function spineAtlasCompress(
                 });
 
                 const newAsset = createNewAssetAt(asset, newFileName);
+
                 newAsset.buffer = newAtlas.buffer;
 
                 return newAsset;

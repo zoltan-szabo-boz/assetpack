@@ -62,6 +62,7 @@ describe('Spine Atlas Compress', () => {
 
         // webp.atlas should NOT be created (bug fix - prevents broken references)
         const { existsSync } = await import('node:fs');
+
         expect(existsSync(`${outputDir}/dragon.webp.atlas`)).toBeFalsy();
     });
 
@@ -118,6 +119,7 @@ describe('Spine Atlas Compress', () => {
 
         // Verify the webp.atlas content references webp textures
         const rawAtlasWebp = readFileSync(`${outputDir}/dragon.webp.atlas`);
+
         expect(rawAtlasWebp.includes('dragon.webp')).toBeTruthy();
         expect(rawAtlasWebp.includes('dragon2.webp')).toBeTruthy();
     });
