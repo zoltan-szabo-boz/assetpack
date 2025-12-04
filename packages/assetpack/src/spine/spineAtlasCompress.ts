@@ -46,7 +46,30 @@ export function spineAtlasCompress(
 
             const textures = atlas.getTextures();
 
-            const assets = formats.map(([format, extension]) => {
+            // Get sibling assets (textures in the same directory)
+            const parent = asset.parent;
+            const siblings = parent?.children || [];
+
+            // Filter formats to only include those where ALL textures exist as siblings or their children
+            const validFormats = formats.filter(([_format, extension]) => {
+                return textures.every((texture) => {
+                    const newTextureName = swapExt(texture, extension);
+
+                    // Check if this texture exists as a sibling or as a child of a sibling
+                    const textureExists = siblings.some((sibling) => {
+                        // Direct match
+                        if (sibling.filename === newTextureName) return true;
+
+                        // Check children (for compressed variants)
+                        return sibling.children.some((child) => child.filename === newTextureName);
+                    });
+
+                    return textureExists;
+                });
+            });
+
+            // Only create atlas files for formats where all textures exist
+            const assets = validFormats.map(([format, extension]) => {
                 const newAtlas = new AtlasView(asset.buffer);
 
                 const newFileName = swapExt(asset.filename, `.${format}.atlas`);
