@@ -43,35 +43,27 @@ export function spineAtlasCompress(
             if (options.etc) formats.push(['etc', '.etc.ktx']);
 
             const atlas = new AtlasView(asset.buffer);
-
             const textures = atlas.getTextures();
 
-            // Get sibling assets (textures in the same directory)
-            const parent = asset.parent;
-            const siblings = parent?.children || [];
+            const siblings = asset.parent?.children || [];
 
-            // Filter formats to only include those where ALL textures exist as siblings or their children
-            const validFormats = formats.filter(([_format, extension]) => {
-                return textures.every((texture) => {
-                    const newTextureName = swapExt(texture, extension);
+            // Build a set of all sibling and child filenames for fast lookup
+            const availableFiles = new Set<string>();
+            for (const sibling of siblings) {
+                availableFiles.add(sibling.filename);
+                for (const child of sibling.children ?? []) {
+                    availableFiles.add(child.filename);
+                }
+            }
 
-                    // Check if this texture exists as a sibling or as a child of a sibling
-                    const textureExists = siblings.some((sibling) => {
-                        // Direct match
-                        if (sibling.filename === newTextureName) return true;
+            // Only include formats where all textures exist
+            const validFormats = formats.filter(([_format, extension]) =>
+                textures.every((texture) => availableFiles.has(swapExt(texture, extension))),
+            );
 
-                        // Check children (for compressed variants)
-                        return sibling.children.some((child) => child.filename === newTextureName);
-                    });
-
-                    return textureExists;
-                });
-            });
-
-            // Only create atlas files for formats where all textures exist
+            // Generate atlas files for valid formats
             const assets = validFormats.map(([format, extension]) => {
                 const newAtlas = new AtlasView(asset.buffer);
-
                 const newFileName = swapExt(asset.filename, `.${format}.atlas`);
 
                 textures.forEach((texture) => {
@@ -79,7 +71,6 @@ export function spineAtlasCompress(
                 });
 
                 const newAsset = createNewAssetAt(asset, newFileName);
-
                 newAsset.buffer = newAtlas.buffer;
 
                 return newAsset;
